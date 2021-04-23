@@ -56,7 +56,9 @@ class CharRNNBuilder:
              a dynet expression. The char embedding.
         """
         token = list(token)
+
         char_embeddings = [self.E[self.charset.index(c)] for c in token if c in self.charset] #ignores unk chars
+
 
         if not char_embeddings: #empty word, no char recognized
             print('problematic token',token,file=sys.stderr,flush=True)
@@ -69,7 +71,6 @@ class CharRNNBuilder:
         bwd_states      = bwd_state.transduce(reversed(char_embeddings))
         
         hidden          = dy.concatenate([fwd_states[-1],bwd_states[-1]])
-        return dy.rectify(self.O * hidden + self.b)
+        out = dy.rectify(self.O * hidden + self.b)
+        return out
 
-
-               

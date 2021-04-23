@@ -79,40 +79,46 @@ class ConsTree(object):
         """
         subtriples = []
         if self.is_leaf():
-            return [(self.idx,self.idx+1,self.label)]
+            return [(self.idx,self.idx+1,self.label,True)]
 
-        for child in self.children: 
-                subtriples.extend(child.triples())
-        leftidx  = min([idx for idx,jdx,label in subtriples])
-        rightidx = max([jdx for idx,jdx,label in subtriples])
-        subtriples.append((leftidx,rightidx,self.label))
+        for child in self.children:
+            subtriples.extend(child.triples())
+        leftidx  = min([idx for idx,jdx,label,leaf_flag in subtriples])
+        rightidx = max([jdx for idx,jdx,label,leaf_flag in subtriples])
+        if self.label!='TOP':
+            subtriples.append((leftidx,rightidx,self.label,False))
         return subtriples
 
-    def compare(self,other):
+    def compare(self,other,pos=None,return_counts=False):
         """
         Compares this tree to another and computes precision,recall,
         fscore. Assumes self is the reference tree
         @param other: the predicted tree
         @return (precision,recall,fscore)
         """
-        print('***',str(self),str(other)) 
+        #print('***',str(self),str(other)) 
         
         self.index_leaves()
         other.index_leaves()
-        
+         
         #filter out leaves
-        #ref_triples  = set([(i,j,X) for i,j,X in self.triples() if j != i+1])
+        #ref_triples  = set([(i,j,X) for i,j,X in self.triples() if j != i+1]) # This seems like it should also filter unaries, which isn't correct
         #pred_triples = set([(i,j,X) for i,j,X in other.triples() if j != i+1])
-
-        ref_triples  = set(self.triples())
-        pred_triples = set(other.triples())
+        ref_triples = set([(i,j,X) for i,j,X,leaf in self.triples() if leaf==False and not X in pos])
+        pred_triples = set([(i,j,X) for i,j,X,leaf in other.triples() if leaf==False and not X in pos])        
         
+        #ref_triples  = set(self.triples())
+        #pred_triples = set(other.triples())
+
         intersect = ref_triples.intersection(pred_triples)
         isize = len(intersect)
-        P = isize/len(pred_triples)
-        R = isize/len(ref_triples)
-        F = (2*P*R)/(P+R)
-        return (P,R,F)
+        if return_counts:
+            return (isize,len(pred_triples),len(ref_triples)) # true_pos, true_pos+false_pos, true_pos+false_neg
+        else:
+            P = isize/len(pred_triples)
+            R = isize/len(ref_triples)
+            F = (2*P*R)/(P+R)
+            return (P,R,F)
     
     def strip_tags(self):
         """
@@ -538,7 +544,10 @@ class PennTreebank:
 if __name__ == '__main__':
     #Generates Penn TB with classical setup
     #PennTreebank.generate_standard_split('/data/Corpus/ptb/treebank_3/parsed/mrg/wsj','/home/bcrabbe/parsing_as_LM/rnng')
-    PennTreebank.generate_standard_split('/Users/bcrabbe/Desktop/treebank_3/parsed/mrg/wsj','/Users/bcrabbe/parsing_as_LM/rnng')
+
+    ptb_dir = '/group/corporapublic/penn_treebank/3.0/corrected/parsed/mrg/wsj'
+    data_dir = '/afs/inf.ed.ac.uk/group/project/prosody/parsing_as_LM/rnng/data'
+    PennTreebank.generate_standard_split(ptb_dir,data_dir)
 
     #FrenchTreebank.generate_standard_split('/data/Corpus/FRENCH_SPMRL/gold/ptb','/home/bcrabbe/parsing_as_LM/rnng')
     

@@ -22,15 +22,18 @@ class SymbolLexicon:
         @param unk_word       : a token string for unknown words
         """
         if type(wordlist) == Counter:
+            
             if unk_word:
                 wordlist.update([unk_word])
             self.i2words       = list(wordlist.keys())
+            self.i2words       = sorted(self.i2words)
             self.words2i       = dict([ (w,idx) for idx,w in enumerate(self.i2words)])
             self.unk_word      = unk_word
             self.word_counts   = wordlist
         else:
             if unk_word:
                 wordlist.append(unk_word)
+            wordlist      = sorted(wordlist)
             self.words2i  = dict([ (w,idx) for idx,w in enumerate(wordlist)])
             self.i2words  = wordlist
             self.unk_word = unk_word
@@ -50,7 +53,7 @@ class SymbolLexicon:
         """
         counts       = wordlist if isinstance(wordlist,Counter) else Counter(wordlist)
         lexlist      = [ word for word, c in counts.most_common(max_lex_size) if c > count_threshold ]
-
+        
         lexlist.extend(special_tokens)
         return SymbolLexicon(lexlist,unk_word)
        
